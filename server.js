@@ -58,7 +58,7 @@ app.post(['/api/order', '/api/orders'], async (req, res) => {
 
   // Basic validation to prevent "Unexpected end of JSON"
   if (!items || !address) {
-    return res.status(400).json({ error: "Missing order details" });
+res.status(200).json({ message: "Order received!" });
   }
 
   try {
