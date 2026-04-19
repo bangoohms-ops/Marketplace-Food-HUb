@@ -9,7 +9,7 @@ const app = express();
 // 1. MIDDLEWARE & CORS CONFIGURATION
 
 app.use(cors({
-  origin: 'https://d-marketplace.netlify.app', 
+  origin: '*', 
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -81,7 +81,7 @@ app.post('/api/order', async (req, res) => {
     const mailOptions = {
       from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER, 
-      subject: `🔥 NEW BANGO ORDER #${orderId}`,
+      subject: `🔥 NEW ORDER #${orderId}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee;">
           <h2 style="color: #000;">Bango! New Order Received</h2>
@@ -111,7 +111,8 @@ app.post('/api/order', async (req, res) => {
 });
 
 // 4. PORT BINDING (Added 0.0.0.0 for Render compatibility)
-const PORT = process.env.PORT || 5000; 
-app.listen(PORT, '0.0.0.0', () => {
+onst PORT = process.env.PORT || 5000; 
+
+app.listen(PORT, () => {
   console.log(`🚀 BANGO BACKEND FLYING ON PORT ${PORT}`);
 });
