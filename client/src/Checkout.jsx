@@ -39,8 +39,7 @@ const Checkout = ({ cart, total, onBack }) => {
       });
 
       
-
-const response = await fetch('await axios.post("https://marketplace-food-hub.onrender.com/api/order", orderData);', {
+const response = await fetch("https://marketplace-food-hub.onrender.com/api/order", {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -52,6 +51,7 @@ const response = await fetch('await axios.post("https://marketplace-food-hub.onr
     items: cart 
   })
 });
+
 
       const result = await response.json();
 
