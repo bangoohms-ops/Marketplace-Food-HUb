@@ -8,7 +8,7 @@ const app = express();
 
 // 1. MIDDLEWARE
 app.use(cors({
-  origin: 'https://d-marketplace.netlify.app/',
+  origin: 'https://d-marketplace.netlify.app',
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
