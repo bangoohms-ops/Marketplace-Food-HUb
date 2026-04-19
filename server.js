@@ -8,7 +8,7 @@ const app = express();
 
 // 1. MIDDLEWARE
 app.use(cors({
-  origin: 'https://cheery-moonbeam-9ecd6f.netlify.app', // Ensure this matches your Netlify URL
+  origin: 'https://cheery-moonbeam-9ecd6f.netlify.app',
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
