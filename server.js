@@ -6,21 +6,18 @@ require("dotenv").config();
 
 const app = express();
 
-// 1. IMPROVED MIDDLEWARE
-
+// 1. MIDDLEWARE
 app.use(cors({
-  origin: 'https://cheery-moonbeam-9ecd6f.netlify.app',
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"]
+  origin: 'https://cheery-moonbeam-9ecd6f.netlify.app', // Ensure this matches your Netlify URL
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json());
 
-// 2. DATABASE CONNECTION (With Error Logging)
+// 2. DATABASE CONNECTION
 const pool = new Pool({ 
    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1")
-        ? false 
-        : { rejectUnauthorized: false }
+   ssl: process.env.DATABASE_URL.includes("localhost") ? false : { rejectUnauthorized: false }
 });
 
 pool.connect((err) => {
@@ -32,33 +29,21 @@ pool.connect((err) => {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: { 
-    user: process.env.EMAIL_USER || 'enodienemmanuel@gmail.com', 
-    pass: process.env.EMAIL_PASS || 'uvms mxaa lman yupu' 
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS 
   }
 });
 
 // --- ROUTES ---
 
-// Health Check (To see if backend is live in browser)
 app.get("/", (req, res) => res.send("Bango Backend is Live! 🚀"));
 
-// 1. GET PRODUCTS
-app.get("/api/products", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM products ORDER BY id ASC");
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// 2. POST ORDER (Supporting both /api/order and /api/orders to be safe)
-app.post(['/api/order', '/api/orders'], async (req, res) => {
+app.post('/api/order', async (req, res) => {
   const { address, paymentMethod, subtotal, deliveryFee, grandTotal, items } = req.body;
 
-  // Basic validation to prevent "Unexpected end of JSON"
+  // Validation
   if (!items || !address) {
-res.status(200).json({ message: "Order received!" });
+    return res.status(400).json({ success: false, error: "Missing items or address" });
   }
 
   try {
@@ -71,22 +56,21 @@ res.status(200).json({ message: "Order received!" });
     const result = await pool.query(query, values);
     const orderId = result.rows[0].id;
 
-    // B. Format the items for the email
+    // B. Format items for email
     const itemsListHtml = items.map(item => 
       `<li><strong>${item.name}</strong> (x${item.quantity}) - ₦${(item.price * item.quantity).toLocaleString()}</li>`
     ).join('');
 
     // C. Setup Email
     const mailOptions = {
-      from: '"Bango Food Hub" <enodienemmanuel@gmail.com>',
-      to: 'enodienemmanuel@gmail.com', // You get the notification
+      from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER, 
       subject: `🔥 NEW BANGO ORDER #${orderId}`,
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; border: 1px solid #eee; padding: 20px;">
-          <h2 style="color: #16a34a;">Bango! New Order Received</h2>
+        <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee;">
+          <h2 style="color: #000;">Bango! New Order Received</h2>
           <p><strong>Order ID:</strong> #${orderId}</p>
           <hr />
-          <h3>Items Ordered:</h3>
           <ul>${itemsListHtml}</ul>
           <hr />
           <p><strong>Address:</strong> ${address}</p>
@@ -99,7 +83,7 @@ res.status(200).json({ message: "Order received!" });
     // D. Send Email
     await transporter.sendMail(mailOptions);
     
-    // E. SUCCESS RESPONSE (This stops the Netlify error)
+    // E. SUCCESS RESPONSE
     return res.status(200).json({ 
         success: true, 
         message: "Order received!", 
@@ -108,11 +92,10 @@ res.status(200).json({ message: "Order received!" });
 
   } catch (err) {
     console.error("Order Processing Error:", err);
-    return res.status(500).json({ error: "Server failed to process order" });
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
 
-// Port configuration
 const PORT = process.env.PORT || 5000; 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 BANGO BACKEND FLYING ON PORT ${PORT}`);

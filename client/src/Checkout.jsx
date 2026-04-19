@@ -1,29 +1,20 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const Checkout = ({ cart, total, onBack }) => {
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('transfer');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Use the 'total' prop passed from App.jsx as the subtotal
   const subtotalAmount = Number(total) || 0; 
   const deliveryFee = subtotalAmount > 0 ? 1500 : 0;
   const grandTotal = subtotalAmount + deliveryFee;
 
   const handleOrder = async () => {
     if (!address.trim()) return alert("Please enter a delivery address!");
-    body: JSON.stringify({
-  address,
-  paymentMethod,
-  subtotal: total,
-  deliveryFee,
-  grandTotal,
-  items: cart 
-})
     
     setIsProcessing(true);
 
-    // Final check: Ensure we aren't sending a null subtotal
     if (subtotalAmount === 0) {
       alert("Your cart seems to be empty.");
       setIsProcessing(false);
@@ -31,34 +22,28 @@ const Checkout = ({ cart, total, onBack }) => {
     }
 
     try {
-      console.log("Sending Order Data:", { 
-        address, 
-        paymentMethod, 
-        subtotal: subtotalAmount, 
-        grandTotal 
+      // Axios automatically stringifies the body and sets headers
+      const response = await axios.post("https://marketplace-food-hub.onrender.com/api/order", {
+        address,
+        paymentMethod,
+        subtotal: subtotalAmount,
+        deliveryFee,
+        grandTotal,
+        items: cart 
       });
 
-      
-const response = await axios.post("https://marketplace-food-hub.onrender.com/api/order", {
-    address,
-    paymentMethod,
-    subtotal: total,
-    deliveryFee,
-    grandTotal,
-    items: cart 
-});
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        alert(`🚀 BANGO! Order #${result.orderId} received.`);
+      // Axios data is stored in response.data
+      if (response.data.success) {
+        alert(`🚀 BANGO! Order #${response.data.orderId} received.`);
         window.location.reload(); 
       } else {
-        throw new Error(result.error || "Order failed to save");
+        throw new Error("Order failed to save");
       }
     } catch (err) {
       console.error("Checkout Sync Error:", err);
-      alert("Error: " + err.message);
+      // Detailed error reporting
+      const errorMsg = err.response?.data?.error || err.message;
+      alert("Error: " + errorMsg);
     } finally {
       setIsProcessing(false);
     }
@@ -107,8 +92,8 @@ const response = await axios.post("https://marketplace-food-hub.onrender.com/api
           <h3 className="text-2xl font-black mb-8">Summary</h3>
           
           <div className="space-y-4 mb-8">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between font-bold">
+            {cart.map((item, index) => (
+              <div key={index} className="flex justify-between font-bold">
                 <span>{item.name} x{item.quantity}</span>
                 <span>₦{(item.price * item.quantity).toLocaleString()}</span>
               </div>
@@ -134,7 +119,6 @@ const response = await axios.post("https://marketplace-food-hub.onrender.com/api
             {isProcessing ? "Sending..." : "Confirm Bango Order"}
           </button>
         </div>
-
       </div>
     </div>
   );
