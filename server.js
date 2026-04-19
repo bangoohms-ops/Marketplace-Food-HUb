@@ -7,9 +7,9 @@ require("dotenv").config();
 const app = express();
 
 // 1. IMPROVED MIDDLEWARE
-// This allows your Netlify frontend to communicate with your Render backend
+
 app.use(cors({
-    origin: "*", // Allows all origins - change this to your Netlify URL later for security
+  origin: 'https://cheery-moonbeam-9ecd6f.netlify.app',
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"]
 }));
