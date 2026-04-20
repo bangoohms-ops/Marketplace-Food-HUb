@@ -23,7 +23,7 @@ const Checkout = ({ cart, total, onBack }) => {
 
     try {
       // Axios automatically stringifies the body and sets headers
-      const response = await axios.post("https://marketplace-food-hub.onrender.com/api/order", {
+      const response = await axios.post("https://marketplace-food-hub-1.onrender.com/api/order", {
         address,
         paymentMethod,
         subtotal: subtotalAmount,
