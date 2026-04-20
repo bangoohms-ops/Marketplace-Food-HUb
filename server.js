@@ -8,7 +8,7 @@ const app = express();
 
 // 1. MIDDLEWARE & CORS CONFIGURATION
 app.use(cors({
-  origin: '*', 
+origin: ['https://d-marketplace.netlify.app', 'http://localhost:5173'],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
