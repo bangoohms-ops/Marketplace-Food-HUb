@@ -7,22 +7,21 @@ require("dotenv").config();
 const app = express();
 
 // 1. MIDDLEWARE & CORS CONFIGURATION
-
 app.use(cors({
   origin: '*', 
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-
 app.options('*', cors()); 
-
 app.use(express.json());
 
 // 2. DATABASE CONNECTION
 const pool = new Pool({ 
    connectionString: process.env.DATABASE_URL,
-   ssl: process.env.DATABASE_URL.includes("localhost") ? false : { rejectUnauthorized: false }
+   ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost") 
+    ? { rejectUnauthorized: false } 
+    : false
 });
 
 pool.connect((err) => {
@@ -41,7 +40,7 @@ const transporter = nodemailer.createTransport({
 
 // --- ROUTES ---
 
-// Root Route (Fixed the "Not Found" issue for the main URL)
+// Root Route (This fixes the "Not Found" message)
 app.get("/", (req, res) => {
   res.status(200).send("Bango Backend is Live! 🚀");
 });
@@ -110,8 +109,8 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
-// 4. PORT BINDING (Added 0.0.0.0 for Render compatibility)
-onst PORT = process.env.PORT || 5000; 
+// 4. PORT BINDING (Fixed the 'onst' typo here)
+const PORT = process.env.PORT || 5000; 
 
 app.listen(PORT, () => {
   console.log(`🚀 BANGO BACKEND FLYING ON PORT ${PORT}`);
