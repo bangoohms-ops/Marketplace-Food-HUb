@@ -69,7 +69,7 @@ app.post('/api/order', async (req, res) => {
       INSERT INTO orders (customer_address, payment_method, subtotal, delivery_fee, grand_total, items)
       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
     `;
-    const values = [address, paymentMethod, subtotal, deliveryFee, grandTotal, JSON.stringify(items)];
+    const values = [address, paymentMethod, subtotal, deliveryFee, grandTotal, items];
     const result = await pool.query(query, values);
     const orderId = result.rows[0].id;
 
