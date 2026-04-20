@@ -75,7 +75,7 @@ function App() {
   
   ];
 useEffect(() => {
-  fetch('https://marketplace-food-hub-1.onrender.com/api/...')
+  fetch('https://marketplace-food-hub-1.onrender.com/api/products')
     .then(res => res.json())
     .then(data => {
      
