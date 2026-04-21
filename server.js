@@ -2,24 +2,19 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const nodemailer = require('nodemailer');
+const isLocal = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost");
 require("dotenv").config();
 
 const app = express();
 
-// 1. MIDDLEWARE & CORS CONFIGURATION
-app.use(cors({
-origin: ['https://d-marketplace.netlify.app', 'http://localhost:5173'],
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.options('*', cors()); 
+// 1. MIDDLEWARE (Open CORS for Netlify)
+app.use(cors()); 
 app.use(express.json());
 
 // 2. DATABASE CONNECTION
 const pool = new Pool({ 
    connectionString: process.env.DATABASE_URL,
-   ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost") 
+   ssl: process.env.DATABASE_URL.includes("neon.tech") 
     ? { rejectUnauthorized: false } 
     : false
 });
@@ -40,12 +35,11 @@ const transporter = nodemailer.createTransport({
 
 // --- ROUTES ---
 
-// Root Route (This fixes the "Not Found" message)
 app.get("/", (req, res) => {
   res.status(200).send("Bango Backend is Live! 🚀");
 });
 
-// 1. GET PRODUCTS
+// GET PRODUCTS
 app.get("/api/products", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM products ORDER BY id ASC");
@@ -56,20 +50,16 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// 2. POST ORDER
-app.post('/api/order', async (req, res) => {
+// POST ORDER (Changed to /api/orders)
+app.post('/api/orders', async (req, res) => {
   const { address, paymentMethod, subtotal, deliveryFee, grandTotal, items } = req.body;
-
-  if (!items || !address) {
-    return res.status(400).json({ success: false, error: "Missing items or address" });
-  }
 
   try {
     const query = `
       INSERT INTO orders (customer_address, payment_method, subtotal, delivery_fee, grand_total, items)
       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
     `;
-    const values = [address, paymentMethod, subtotal, deliveryFee, grandTotal, items];
+    const values = [address, paymentMethod, subtotal, deliveryFee, grandTotal, JSON.stringify(items)];
     const result = await pool.query(query, values);
     const orderId = result.rows[0].id;
 
@@ -81,37 +71,16 @@ app.post('/api/order', async (req, res) => {
       from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER, 
       subject: `🔥 NEW ORDER #${orderId}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee;">
-          <h2 style="color: #000;">Bango! New Order Received</h2>
-          <p><strong>Order ID:</strong> #${orderId}</p>
-          <hr />
-          <ul>${itemsListHtml}</ul>
-          <hr />
-          <p><strong>Address:</strong> ${address}</p>
-          <p><strong>Payment:</strong> ${paymentMethod}</p>
-          <p style="font-size: 20px; font-weight: bold;">Total: ₦${grandTotal.toLocaleString()}</p>
-        </div>
-      `
+      html: `<h2>New Order #${orderId}</h2><ul>${itemsListHtml}</ul><p>Address: ${address}</p>`
     };
 
     await transporter.sendMail(mailOptions);
-    
-    return res.status(200).json({ 
-        success: true, 
-        message: "Order received!", 
-        orderId 
-    });
-
+    res.status(200).json({ success: true, orderId });
   } catch (err) {
-    console.error("Order Processing Error:", err);
-    return res.status(500).json({ success: false, error: "Internal Server Error" });
+    console.error("Order Error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 4. PORT BINDING (Fixed the 'onst' typo here)
-const PORT = process.env.PORT || 5000; 
-
-app.listen(PORT, () => {
-  console.log(`🚀 BANGO BACKEND FLYING ON PORT ${PORT}`);
-});
+const PORT = process.env.PORT || 5001; 
+app.listen(PORT, () => console.log(`🚀 PORT ${PORT}`));
