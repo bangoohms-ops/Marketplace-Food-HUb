@@ -7,36 +7,95 @@ function App() {
   const [view, setView] = useState('menu');
 
   // fallback data if database is empty
+// Updated fallback data to show COOKED FOOD instead of raw items
   const sampleData = [
     { 
       id: 1, 
-      name: "De-Stoned Rice (5kg)", 
-      price: 6500, 
-      image_url: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800", 
-      category: "Grains" 
+      name: "Party Jollof Rice", 
+      price: 4500, 
+      image_url: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800", 
+      category: "Main Dish" 
     },
     { 
       id: 2, 
-      name: "Bag of Onions", 
-      price: 12000, 
-      image_url: "https://images.unsplash.com/photo-1508747703725-719777637510?w=800", 
-      category: "Vegetables" 
+      name: "Abula Special", 
+      price: 4000, 
+      image_url: "https://images.unsplash.com/photo-1628102422204-706cc6e3c0b1?w=800", 
+      category: "Swallow" 
     },
     { 
       id: 3, 
-      name: "Refined Palm Oil (2L)", 
-      price: 4800, 
-      image_url: "https://images.unsplash.com/photo-162070612211c-2f243020616b?w=800", 
-      category: "Oils" 
+      name: "Pounded Yam & Egusi", 
+      price: 6000, 
+      image_url: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800", 
+      category: "Swallow" 
     },
     { 
       id: 4, 
-      name: "Titus Fish (Frozen 5kg)", 
-      price: 18500, 
-      image_url: "https://images.unsplash.com/photo-1534939561122-3950781348f9?w=800", 
-      category: "Protein" 
+      name: "Seafood Okra", 
+      price: 7500, 
+      image_url: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800", 
+      category: "Soups" 
+    },
+    { 
+      id: 5, 
+      name: "Grilled Catfish & Bole", 
+      price: 12000, 
+      image_url: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800", 
+      category: "Grills" 
+    },
+    { 
+      id: 6, 
+      name: "Spicy Asun (Goat Meat)", 
+      price: 3500, 
+      image_url: "https://images.unsplash.com/photo-1532636875304-0c89119d9b4d?w=800", 
+      category: "Sides" 
+    },
+    { 
+      id: 7, 
+      name: "Sweet & Sour Chicken", 
+      price: 6800, 
+      image_url: "https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800", 
+      category: "Chinese" 
+    },
+    // --- SALADS & SIDES ---
+    { 
+      id: 8, 
+      name: "Grilled Chicken Caesar", 
+      price: 5200, 
+      image_url: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=800", 
+      category: "Salads" 
+    },
+    { 
+      id: 9, 
+      name: "Classic Coleslaw Side", 
+      price: 1500, 
+      image_url: "https://images.unsplash.com/photo-1625943555419-56a2cb596640?w=800", 
+      category: "Salads" 
+    },
+    // --- GRILLS & EXTRAS ---
+    { 
+      id: 10, 
+      name: "Grilled Catfish & Bole", 
+      price: 12000, 
+      image_url: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800", 
+      category: "Grills" 
+    },
+    { 
+      id: 11, 
+      name: "Spicy Asun (Goat Meat)", 
+      price: 3500, 
+      image_url: "https://images.unsplash.com/photo-1532636875304-0c89119d9b4d?w=800", 
+      category: "Sides" 
+    },
+    { 
+      id: 12, 
+      name: "Bango Special Wings", 
+      price: 4800, 
+      image_url: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=800", 
+      category: "Sides" 
     }
-];
+  ];
 
   // 1. FETCH PRODUCTS FROM RENDER
   useEffect(() => {
