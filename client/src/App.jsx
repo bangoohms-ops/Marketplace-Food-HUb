@@ -96,12 +96,12 @@ function App() {
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans">
+    <div className="min-h-screen w-full max-w-full bg-white text-black font-sans overflow-x-hidden">
       
       {/* VIEW: CUSTOMER MENU */}
       {view === 'menu' && (
         <>
-          <header className="flex justify-between items-center px-6 md:px-10 py-8 sticky top-0 bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
+<header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-xl z-[100] border-b border-gray-100 px-4 md:px-10 flex justify-between items-center">
             <h1 className="text-3xl md:text-4xl font-black tracking-tighter">FRESH FOODS<span className="text-orange-600">!</span></h1>
             <div className="flex gap-4 md:gap-6 items-center">
                <button onClick={() => setView('login')} className="text-gray-400 text-[9px] font-bold uppercase tracking-widest hover:text-black transition-colors">
