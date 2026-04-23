@@ -2,18 +2,18 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const nodemailer = require('nodemailer');
-const isLocal = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost");
 require("dotenv").config();
 
 const app = express();
 
-// 1. MIDDLEWARE (Open CORS for Netlify)
+// 1. MIDDLEWARE
 app.use(cors()); 
 app.use(express.json());
 
-// 2. DATABASE CONNECTION
+// 2. DATABASE CONNECTION (Optimized for Render/Neon)
 const pool = new Pool({ 
    connectionString: process.env.DATABASE_URL,
+  
    ssl: process.env.DATABASE_URL.includes("neon.tech") 
     ? { rejectUnauthorized: false } 
     : false
@@ -50,7 +50,34 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// POST ORDER (Changed to /api/orders)
+// POST NEW SALE (From POS)
+
+app.post('/api/sales', async (req, res) => {
+  
+  const { items, total_amount, payment_method, staff_name } = req.body;
+  
+  try {
+ const newSale = await pool.query(
+    "INSERT INTO public.sales (items, total_amount, payment_method, staff_name) VALUES ($1, $2, $3, $4) RETURNING *",
+    [JSON.stringify(items), total_amount, payment_method, staff_name]
+);
+    res.status(201).json(newSale.rows[0]);
+  } catch (err) {
+    console.error("Sale Recording Error:", err.message);
+    res.status(500).json({ error: err.message }); // Sends the real error to the console
+  }
+});
+// GET ALL SALES (For Management Dashboard)
+app.get('/api/sales', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM sales ORDER BY created_at DESC");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST ONLINE ORDER
 app.post('/api/orders', async (req, res) => {
   const { address, paymentMethod, subtotal, deliveryFee, grandTotal, items } = req.body;
 
@@ -82,5 +109,5 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5001; 
-app.listen(PORT, () => console.log(`🚀 PORT ${PORT}`));
+const PORT = process.env.PORT || 5000; 
+app.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
