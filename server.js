@@ -49,6 +49,32 @@ app.get("/api/products", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+// Get Dashboard Stats
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_orders,
+        SUM(total_amount) as total_revenue,
+        AVG(total_amount) as avg_sale,
+        JSON_OBJECT_AGG(payment_method, method_count) as methods
+      FROM (
+        SELECT payment_method, COUNT(*) as method_count, total_amount 
+        FROM sales 
+        GROUP BY payment_method, total_amount
+      ) as subquery
+    `);
+    
+    const recentSales = await pool.query("SELECT * FROM sales ORDER BY created_at DESC LIMIT 10");
+    
+    res.json({
+      summary: stats.rows[0],
+      recentSales: recentSales.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // POST NEW SALE (From POS)
 
@@ -109,5 +135,5 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000; 
+const PORT = process.env.PORT || 5001; 
 app.listen(PORT, () => console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`));
