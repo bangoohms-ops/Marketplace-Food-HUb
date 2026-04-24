@@ -99,49 +99,87 @@ function App() {
     <div className="min-h-screen w-full max-w-full bg-white text-black font-sans overflow-x-hidden">
       
       {/* VIEW: CUSTOMER MENU */}
-      {view === 'menu' && (
-        <>
-<header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-xl z-[100] border-b border-gray-100 px-4 md:px-10 flex justify-between items-center">
-            <h1 className="text-3xl md:text-4xl font-black tracking-tighter">FRESH FOODS<span className="text-orange-600">!</span></h1>
-            <div className="flex gap-4 md:gap-6 items-center">
-               <button onClick={() => setView('login')} className="text-gray-400 text-[9px] font-bold uppercase tracking-widest hover:text-black transition-colors">
-                Staff Portal
-              </button>
-              <button onClick={() => setView('checkout')} className="bg-black text-white px-6 md:px-8 py-3 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:scale-105 transition">
-                Cart ({totalItems})
-              </button>
+   {/* VIEW: CUSTOMER MENU */}
+{view === 'menu' && (
+  <>
+    {/* HEADER: Added backdrop-blur for a premium glass feel */}
+    <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-[100] border-b border-gray-100 px-4 md:px-10 flex justify-between items-center">
+      <h1 className="text-3xl md:text-4xl font-black tracking-tighter">
+        FRESH FOODS<span className="text-orange-600">!</span>
+      </h1>
+      <div className="flex gap-4 md:gap-6 items-center">
+        <button 
+          onClick={() => setView('login')} 
+          className="text-gray-400 text-[9px] font-bold uppercase tracking-widest hover:text-black transition-colors"
+        >
+          Staff Portal
+        </button>
+        <button 
+          onClick={() => setView('checkout')} 
+          className="bg-black text-white px-6 md:px-8 py-3 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:scale-105 transition shadow-lg"
+        >
+          Cart ({totalItems})
+        </button>
+      </div>
+    </header>
+    
+    {/* MAIN: Added pt-32 to clear the fixed header and spacing for mobile */}
+    <main className="pt-32 pb-16 px-6 md:px-10 max-w-[1400px] mx-auto">
+      {/* Title Section: Added a small orange accent line */}
+      <div className="mb-16">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-[2px] w-8 bg-orange-600"></div>
+          <span className="text-orange-600 text-[10px] font-black uppercase tracking-[0.3em]">Maryland Lounge</span>
+        </div>
+        <h2 className="text-5xl md:text-8xl font-black tracking-tighter italic leading-none">
+          Our <span className="text-orange-600">Menu.</span>
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+        {products.map((product) => (
+          <div key={product.id} className="group">
+            {/* Image Container */}
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-gray-100 aspect-[4/5] mb-6 shadow-sm group-hover:shadow-xl transition-all duration-500">
+              <img 
+                src={product.image_url} 
+                alt={product.name} 
+                className="w-full h-full object-cover group-hover:scale-110 transition duration-700" 
+              />
+              <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-1 rounded-full shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black">{product.category || 'Special'}</p>
+              </div>
             </div>
-          </header>
-          
-          <main className="px-6 md:px-10 py-16 max-w-[1400px] mx-auto">
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-16 italic">Our Menu.</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
-              {products.map((product) => (
-                <div key={product.id} className="group">
-                  <div className="relative overflow-hidden rounded-[2.5rem] bg-gray-100 aspect-[4/5] mb-6">
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
-                  </div>
-                  <div className="flex justify-between items-start px-2">
-                    <h3 className="text-xl md:text-2xl font-bold tracking-tight">{product.name}</h3>
-                    <p className="text-xl md:text-2xl font-black italic">₦{product.price.toLocaleString()}</p>
-                  </div>
-                  <div className="mt-8">
-                    {getItemQty(product.id) === 0 ? (
-                      <button onClick={() => addToCart(product)} className="w-full py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-orange-600 transition">Add To Cart +</button>
-                    ) : (
-                      <div className="flex items-center justify-between bg-gray-100 rounded-2xl p-2 border-2 border-black">
-                        <button onClick={() => removeFromCart(product)} className="w-12 h-12 flex items-center justify-center bg-white rounded-xl font-black text-2xl">-</button>
-                        <span className="font-black text-2xl">{getItemQty(product.id)}</span>
-                        <button onClick={() => addToCart(product)} className="w-12 h-12 flex items-center justify-center bg-white rounded-xl font-black text-2xl">+</button>
-                      </div>
-                    )}
-                  </div>
+
+            {/* Product Details */}
+            <div className="flex justify-between items-start px-2">
+              <h3 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900">{product.name}</h3>
+              <p className="text-xl md:text-2xl font-black italic text-orange-600">₦{product.price.toLocaleString()}</p>
+            </div>
+
+            {/* Action Button */}
+            <div className="mt-8">
+              {getItemQty(product.id) === 0 ? (
+                <button 
+                  onClick={() => addToCart(product)} 
+                  className="w-full py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-orange-600 transition-colors shadow-lg active:scale-95"
+                >
+                  Add To Cart +
+                </button>
+              ) : (
+                <div className="flex items-center justify-between bg-gray-100 rounded-2xl p-2 border-2 border-black">
+                  <button onClick={() => removeFromCart(product)} className="w-12 h-12 flex items-center justify-center bg-white rounded-xl font-black text-2xl hover:text-orange-600 transition">-</button>
+                  <span className="font-black text-2xl">{getItemQty(product.id)}</span>
+                  <button onClick={() => addToCart(product)} className="w-12 h-12 flex items-center justify-center bg-white rounded-xl font-black text-2xl hover:text-orange-600 transition">+</button>
                 </div>
-              ))}
+              )}
             </div>
-          </main>
-        </>
-      )}
+          </div>
+        ))}
+      </div>
+    </main>
+  </>
+)}
 
       {/* VIEW: LOGIN FORM */}
       {view === 'login' && (

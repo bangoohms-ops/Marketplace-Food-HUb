@@ -32,13 +32,18 @@ const POS_Screen = () => {
     if (activeCart.length === 0) return alert("Cart is empty!");
     const saleData = {
       items: activeCart,
-      total_amount: total,
+      total_price: total,
       payment_method: paymentMethod,
-      staff_name: "Enodien Admin"
+      staff_name: "Admin"
     };
 
     try {
-      const response = await axios.post('http://localhost:5001/api/sales', saleData);
+    
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5001' 
+  : 'https://marketplace-food-hub-1.onrender.com';
+
+const response = await axios.post(`${API_BASE_URL}/api/sales`, saleData);
       if (response.status === 201 || response.status === 200) {
         alert("✅ Sale Recorded!");
         setActiveCart([]);

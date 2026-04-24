@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// --- 1. Middleware ---
+// --- 1. Middleware (MUST BE AT TOP) ---
 app.use(cors());
 app.use(express.json());
 
@@ -36,6 +36,18 @@ const initializeDatabase = async () => {
       payment_method VARCHAR(50) DEFAULT 'Cash',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      full_name TEXT,
+      phone TEXT,
+      email TEXT,
+      address TEXT,
+      grand_total DECIMAL(12, 2),
+      payment_status TEXT,
+      items JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `;
 
   try {
@@ -43,7 +55,7 @@ const initializeDatabase = async () => {
     console.log("✅ Connected to Bango Food Hub Database");
     
     await client.query(createTablesQuery);
-    console.log("✅ Database Tables Verified & Ready");
+    console.log("✅ All Database Tables Verified (Products, Sales, Orders)");
     
     client.release();
   } catch (err) {
@@ -71,13 +83,22 @@ app.get('/api/sales', async (req, res) => {
   }
 });
 
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products ORDER BY name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET Products Error:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 // POST: Create a new sale from POS
 app.post('/api/sales', async (req, res) => {
   try {
     const { items, total_price, payment_method } = req.body;
 
-    // Safety Check: Prevent the "null value" error
-    if (total_price === undefined || total_price === null) {
+    if (!total_price) {
       return res.status(400).json({ error: "Total price is required" });
     }
 
@@ -86,13 +107,31 @@ app.post('/api/sales', async (req, res) => {
       [JSON.stringify(items), total_price, payment_method || 'Cash']
     );
     
-    console.log("💰 New Sale Recorded:", total_price);
     res.status(201).json(newSale.rows[0]);
   } catch (err) {
     console.error("POST Sales Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
+// POST: NEW ORDERS FROM CHECKOUT
+app.post('/api/orders', async (req, res) => {
+    try {
+      const { fullName, phone, email, address, grandTotal, paymentStatus, items } = req.body;
+      
+      const newOrder = await pool.query(
+        `INSERT INTO orders (full_name, phone, email, address, grand_total, payment_status, items) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [fullName, phone, email, address, grandTotal, paymentStatus, JSON.stringify(items)]
+      );
+  
+      console.log("📦 New Order Saved:", newOrder.rows[0].id);
+      res.status(201).json(newOrder.rows[0]);
+    } catch (err) {
+      console.error("Order Save Error:", err.message);
+      res.status(500).json({ error: "Failed to save order" });
+    }
+  });
 
 // --- 4. Start Server ---
 app.listen(PORT, () => {
