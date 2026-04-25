@@ -10,13 +10,11 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// --- 1. POSTGRES CONNECTION ---
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// --- 2. EMAIL CONFIGURATION ---
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -25,17 +23,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- 3. DATABASE INITIALIZATION ---
 const initializeDatabase = async () => {
   const createTablesQuery = `
-    CREATE TABLE IF NOT EXISTS products (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      price DECIMAL(12, 2) NOT NULL,
-      category VARCHAR(100),
-      image_url TEXT
-    );
-
     CREATE TABLE IF NOT EXISTS sales (
       id SERIAL PRIMARY KEY,
       items JSONB NOT NULL,
@@ -57,89 +46,71 @@ const initializeDatabase = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
-
   try {
     const client = await pool.connect();
     await client.query(createTablesQuery);
     console.log("✅ PostgreSQL Tables Verified");
     client.release();
   } catch (err) {
-    console.error("❌ DB Initialization Error:", err.message);
+    console.error("❌ DB Error:", err.message);
   }
 };
-
 initializeDatabase();
 
-// --- 4. API ROUTES ---
+// --- API ROUTES ---
 
-app.get('/', (req, res) => res.send('Bango Food Hub Backend is Running...'));
+// 1. GET ALL SALES (For CEO Dashboard)
+app.get('/api/sales', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM sales ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Could not fetch sales" });
+  }
+});
 
-// SALES ROUTE (For the POS Screen)
+// 2. RECORD POS SALE
 app.post('/api/sales', async (req, res) => {
   try {
     const { items, total_price, payment_method, staff_name } = req.body;
-    
+    const sanitizedItems = typeof items === 'string' ? items : JSON.stringify(items);
+    const sanitizedTotal = parseFloat(total_price);
+
     const newSale = await pool.query(
       `INSERT INTO sales (items, total_price, payment_method, staff_name) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [JSON.stringify(items), total_price, payment_method, staff_name]
+      [sanitizedItems, sanitizedTotal, payment_method || 'Cash', staff_name || 'Admin']
     );
-
     res.status(201).json(newSale.rows[0]);
   } catch (err) {
     console.error("❌ Sale Error:", err.message);
-    res.status(500).json({ error: "Could not record sale" });
+    res.status(500).json({ error: "Database error", details: err.message });
   }
 });
 
-// ORDERS ROUTE (For the Frontend Checkout)
+// 3. ONLINE ORDERS
 app.post('/api/orders', async (req, res) => {
-    try {
-      const { fullName, phone, email, address, grandTotal, paymentStatus, items } = req.body;
-      
-      const newOrder = await pool.query(
-        `INSERT INTO orders (full_name, phone, email, address, grand_total, payment_status, items) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [fullName, phone, email, address, grandTotal, paymentStatus, JSON.stringify(items)]
-      );
-
-      // EMAIL LOGIC
-      if (email) {
-        const mailOptions = {
-          from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
-          to: email,
-          subject: 'Order Confirmed! 🚀 - Bango Food Hub',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; padding: 20px;">
-              <h1 style="color: #ea580c;">Bango Food Hub</h1>
-              <h2>Order Received, ${fullName}!</h2>
-              <p>Total: ₦${Number(grandTotal).toLocaleString()}</p>
-              <p>Delivery to: ${address}</p>
-              <hr />
-              <p>We are preparing your meal now.</p>
-            </div>
-          `
-        };
-        await transporter.sendMail(mailOptions);
-      }
-  
-      res.status(201).json(newOrder.rows[0]);
-    } catch (err) {
-      console.error("Order Error:", err.message);
-      res.status(500).json({ error: "Order failed" });
-    }
-});
-
-// GET PRODUCTS
-app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products ORDER BY id DESC');
-    res.json(result.rows);
+    const { fullName, phone, email, address, grandTotal, paymentStatus, items } = req.body;
+    const newOrder = await pool.query(
+      `INSERT INTO orders (full_name, phone, email, address, grand_total, payment_status, items) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [fullName, phone, email, address, parseFloat(grandTotal), paymentStatus, JSON.stringify(items)]
+    );
+
+    if (email) {
+      const mailOptions = {
+        from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Order Confirmed! 🚀',
+        html: `<h1 style="color: #ea580c;">Bango Food Hub</h1><p>Thanks ${fullName}, your order for ₦${grandTotal} is confirmed!</p>`
+      };
+      await transporter.sendMail(mailOptions);
+    }
+    res.status(201).json(newOrder.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Order failed" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Bango Food Hub server spinning on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server spinning on port ${PORT}`));
