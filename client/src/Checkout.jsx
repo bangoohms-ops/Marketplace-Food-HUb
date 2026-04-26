@@ -20,7 +20,7 @@ const Checkout = ({ cart, total, onBack }) => {
 
   // --- 1. FIXED WHATSAPP LOGIC ---
   const sendWhatsAppNotification = (cartItems, reference) => {
-    const myNumber = "2347018780492";
+    const myNumber = "2348164580672";
 
     const orderSummary = cartItems
       .map((item) => `${item.quantity}x ${item.name}`)

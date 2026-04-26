@@ -8,7 +8,7 @@ const AdminDashboard = () => {
 
   // Determine API URL based on environmentconst 
   const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://127.0.0.1:5001' // Changed from localhost to 127.0.0.1
+  ? 'http://localhost:5001' 
   : 'https://marketplace-food-hub-1.onrender.com';
   useEffect(() => {
     const fetchSales = async () => {
