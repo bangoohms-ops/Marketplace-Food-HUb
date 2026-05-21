@@ -9,6 +9,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "axios": "^1.15.2",
     "cors": "^2.8.6",
     "dotenv": "^16.0.3",

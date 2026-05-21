@@ -1,25 +1,17 @@
+require('dotenv').config(); // MUST BE LINE 1 to load environment properties across all modules
 const express = require('express');
-const { Pool } = require('pg');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+const pool = require('./db'); // Imports the connection manager cleanly
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// --- GLOBAL MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
 
-if (!process.env.DATABASE_URL) {
-  console.error("❌ ERROR: DATABASE_URL is missing");
-  process.exit(1);
-}
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
+// --- NODEMAILER CONFIGURATION ---
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -28,14 +20,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- 4. DATABASE INITIALIZATION (With Auto-Correction) ---
+// --- DATABASE INITIALIZATION LAYER ---
 const initializeDatabase = async () => {
   try {
     const client = await pool.connect();
     
-    // Use this to FORCE a reset if your table is stuck with old columns:
-    // await client.query('DROP TABLE IF EXISTS sales CASCADE;'); 
-    
+    // Safely creates operational schemas without blowing away pre-existing data rows
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
@@ -67,7 +57,7 @@ const initializeDatabase = async () => {
       );
     `);
     
-    console.log("✅ PostgreSQL Tables Verified & Synced");
+    console.log("✅ PostgreSQL Tables Verified & Synced successfully!");
     client.release();
   } catch (err) {
     console.error("❌ DB Initialization Error:", err.message);
@@ -76,26 +66,27 @@ const initializeDatabase = async () => {
 
 initializeDatabase();
 
-// --- 5. API ROUTES ---
+// --- API ROUTE MATRIX ---
 
-app.get('/', (req, res) => res.send('Bango Food Hub Backend is Running...'));
+// Base Check Link
+app.get('/', (req, res) => res.send('Bango Food Hub Backend Core Engine Online.'));
 
+// Get Sales Ledger Records
 app.get('/api/sales', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM sales ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Could not fetch sales" });
+    res.status(500).json({ error: "Could not fetch sales record arrays." });
   }
 });
 
+// Record New Sale Event Entry
 app.post('/api/sales', async (req, res) => {
   const { items, total_price, payment_method, staff_name } = req.body;
-  
   if (!items || !total_price) {
-    return res.status(400).json({ error: "Missing items or total price" });
+    return res.status(400).json({ error: "Missing required transactional payload items or total valuation parameters." });
   }
-
   try {
     const newSale = await pool.query(
       `INSERT INTO sales (items, total_price, payment_method, staff_name) 
@@ -109,6 +100,7 @@ app.post('/api/sales', async (req, res) => {
   }
 });
 
+// Route Order Creation Pipeline with Automated Email Receipt Engine
 app.post('/api/orders', async (req, res) => {
     const { fullName, phone, email, address, grandTotal, paymentStatus, items } = req.body;
     try {
@@ -124,17 +116,20 @@ app.post('/api/orders', async (req, res) => {
                 from: `"Bango Food Hub" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: 'Order Confirmed! 🚀',
-                html: `<h1>Order Received, ${fullName}!</h1><p>Total: ₦${Number(grandTotal).toLocaleString()}</p>`
+                html: `<h1>Order Received, ${fullName}!</h1><p>Total Transaction Summation: ₦${Number(grandTotal).toLocaleString()}</p>`
               };
               await transporter.sendMail(mailOptions);
-        } catch (mErr) { console.error("Email fail:", mErr.message); }
+        } catch (mErr) { 
+          console.error("SMTP Email Dispatch Failure:", mErr.message); 
+        }
       }
       res.status(201).json(newOrder.rows[0]);
     } catch (err) {
-      res.status(500).json({ error: "Order failed" });
+      res.status(500).json({ error: "Order integration routing failed." });
     }
 });
 
+// Fetch Available Catalog Products Array
 app.get('/api/products', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM products ORDER BY id DESC');
@@ -144,4 +139,5 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
+// Start Listening Pipeline
+app.listen(PORT, () => console.log(`🚀 Bango Food Hub Engine active on port: ${PORT}`));
